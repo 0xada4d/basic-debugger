@@ -7,4 +7,4 @@ debugger = debugger.debugger()
 pid = raw_input("Enter pid of process to which to attach: ")
 
 debugger.attach(int(pid))
-debugger.detach()
+debugger.run()
