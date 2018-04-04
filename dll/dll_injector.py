@@ -22,6 +22,8 @@ from ctypes import *
 # In CreateRemoteThread, lpStartAddress will be the address of the LoadLibraryA()
 # and lpParameter will be the path to the DLL we want to load
 
+# Run: ./dll_injector <PID> <Path to DLL>
+
 PAGE_READWRITE  = 0x04
 PROCESS_ALL_ACCESS = ( 0x000F0000 | 0x00100000 | 0xFFF )
 VIRTUAL_MEM = ( 0x1000 | 0x2000 )
