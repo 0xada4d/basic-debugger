@@ -8,6 +8,7 @@ PROCESS_ALL_ACCESS = ( 0x000F0000 | 0x00100000 | 0xFFF )
 VIRTUAL_MEM = ( 0x1000 | 0x2000 )
 
 kernel32 = windll.kernel32
+ntdll = windll.ntdll
 pid = sys.argv[1]
 dll_path = sys.argv[2]
 dll_len = len(dll_path)
@@ -28,13 +29,25 @@ kernel32.WriteProcessMemory(process_handle, inject_address, dll_path, dll_len, b
 
 # Resolve the address for LoadLibraryA
 kernel32_handle = kernel32.GetModuleHandleA("kernel32.dll")
-loadlib_handle = kernel32.GetProcAddress(kernel32_handle, "LoadLibraryA")
+loadlib_address = kernel32.GetProcAddress(kernel32_handle, "LoadLibraryA")
 
 # Attempt to create the thread with entry point set to LoadLibraryA
 # and a parameter as the DLL path
 thread_id = c_ulong(0)
-if not kernel32.CreateRemoteThread(process_handle, None, 0, loadlib_handle, inject_address, 0, byref(thread_id)):
-    print("Failed to inject the DLL. Exiting..")
+
+if ntdll.RtlCreateUserThread(process_handle, c_int(0), False, 0, c_int(0), c_int(0), loadlib_address, inject_address, c_int(0), c_int(0)):
+    print("Failed to inject the DLL. Exiting")
     sys.exit(0)
+# if not kernel32.CreateRemoteThread(process_handle, None, 0, loadlib_handle, inject_address, 0, byref(thread_id)):
+#     print("Failed to inject the DLL. Exiting..")
+#     sys.exit(0)
+
+# Graceful cleanup
+
+# Free the memory we previously allocated
+kernel32.VirtualFreeEx(process_handle, inject_address, dll_len, 0x8000)
+
+# Close handle to the process
+kernel32.CloseHandle(process_handle)
 
 print("Remote thread with ID 0x%08x created." % thread_id.value)
